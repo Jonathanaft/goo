@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Goocraft Browser</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+        :root {
+            --mc-green: #007b00;
+            --mc-light-bg: #f5f5f5;
+            --mc-border: #ddd;
+            --mc-btn-bg: #ccc;
+            --mc-btn-border: #aaa;
+            --mc-text: #333;
+        }
+        body {
+            background: var(--mc-light-bg);
+            color: var(--mc-text);
+            font-family: 'Press Start 2P', cursive;
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .toolbar {
+            background: #eee;
+            padding: 10px;
+            border-bottom: 4px solid var(--mc-border);
+            display: flex;
+            gap: 8px;
+        }
+        .mc-btn {
+            background: var(--mc-btn-bg);
+            border: 3px solid var(--mc-btn-border);
+            color: var(--mc-text);
+            padding: 8px;
+            font-family: inherit;
+            cursor: pointer;
+            image-rendering: pixelated;
+        }
+        .mc-btn:hover {
+            background: #ddd;
+        }
+        .url-bar {
+            flex-grow: 1;
+            background: #fff;
+            border: 3px solid var(--mc-border);
+            color: var(--mc-text);
+            padding: 8px;
+            font-family: inherit;
+        }
+        .browser-frame {
+            flex-grow: 1;
+            border: none;
+            background: #f5f5f5;
+        }
+        .tabs-bar {
+            background: #eee;
+            padding: 5px;
+            display: flex;
+            gap: 5px;
+            border-bottom: 4px solid var(--mc-border);
+        }
+        .tab {
+            background: var(--mc-btn-bg);
+            color: var(--mc-text);
+            padding: 8px;
+            cursor: pointer;
+            border: 2px solid var(--mc-btn-border);
+        }
+        .tab.active {
+            background: #ddd;
+            border-color: var(--mc-green);
+        }
+        .status-bar {
+            background: #eee;
+            padding: 5px;
+            color: var(--mc-green);
+            border-top: 4px solid var(--mc-border);
+        }
+    </style>
+</head>
+<body>
+    <div class="tabs-bar" id="tabsContainer">
+        <div class="tab active">New Tab</div>
+    </div>
+    
+    <div class="toolbar">
+        <button class="mc-btn" onclick="goBack()">◄</button>
+        <button class="mc-btn" onclick="goForward()">►</button>
+        <input type="text" class="url-bar" id="urlInput" placeholder="Enter URL...">
+        <button class="mc-btn" onclick="loadUrl()">GO</button>
+        <button class="mc-btn" onclick="newTab()">+</button>
+    </div>
+
+    <iframe class="browser-frame" id="browserWindow"></iframe>
+    
+    <div class="status-bar" id="statusBar">
+        Ready
+    </div>
+
+    <script>
+        let currentTab = 0;
+        let tabs = [{
+            history: [],
+            currentIndex: -1,
+            url: ''
+        }];
+
+        function loadUrl() {
+            let url = document.getElementById('urlInput').value;
+            if (!url.startsWith('http')) {
+                url = 'https://' + url;
+            }
+            
+            tabs[currentTab].url = url;
+            tabs[currentTab].history.push(url);
+            tabs[currentTab].currentIndex++;
+            
+            document.getElementById('browserWindow').src = url;
+            updateStatus(`Loading ${url}...`);
+        }
+
+        function goBack() {
+            if (tabs[currentTab].currentIndex > 0) {
+                tabs[currentTab].currentIndex--;
+                document.getElementById('browserWindow').src = 
+                    tabs[currentTab].history[tabs[currentTab].currentIndex];
+            }
+        }
+
+        function goForward() {
+            if (tabs[currentTab].currentIndex < tabs[currentTab].history.length - 1) {
+                tabs[currentTab].currentIndex++;
+                document.getElementById('browserWindow').src = 
+                    tabs[currentTab].history[tabs[currentTab].currentIndex];
+            }
+        }
+
+        function newTab() {
+            tabs.push({
+                history: [],
+                currentIndex: -1,
+                url: ''
+            });
+            currentTab = tabs.length - 1;
+            updateTabsDisplay();
+            document.getElementById('browserWindow').src = '';
+            document.getElementById('urlInput').value = '';
+        }
+
+        function updateTabsDisplay() {
+            const container = document.getElementById('tabsContainer');
+            container.innerHTML = tabs.map((tab, index) => `
+                <div class="tab ${index === currentTab ? 'active' : ''}" 
+                     onclick="switchTab(${index})">
+                    Tab ${index + 1}
+                </div>
+            `).join('');
+        }
+
+        function switchTab(index) {
+            currentTab = index;
+            updateTabsDisplay();
+            document.getElementById('browserWindow').src = tabs[currentTab].url;
+            document.getElementById('urlInput').value = tabs[currentTab].url || '';
+        }
+
+        function updateStatus(message) {
+            document.getElementById('statusBar').textContent = message;
+        }
+
+        document.getElementById('urlInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') loadUrl();
+        });
+    </script>
+</body>
+</html>
